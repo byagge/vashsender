@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sent Campaigns</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Alpine.js CDN -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    /* Custom styles for chart and other minor adjustments */
+    [x-cloak] { display: none; }
+    .chart-container { height: 256px; }
+        
+  </style>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        lucide.createIcons();
+    });
+</script>
+</head>
+<body x-data="{
+  searchTerm: '',
+  statusFilter: 'All',
+  senderFilter: 'All',
+  expandedRows: new Set(),
+  currentPage: 1,
+  itemsPerPage: 6,
+  campaigns: [
+    {
+      id: 1,
+      name: 'Black Friday Sale 2024',
+      subject: '🔥 50% OFF Everything - Limited Time Only!',
+      sentDate: '2024-11-25',
+      sentTime: '09:00 AM',
+      senderEmail: 'sales@company.com',
+      targetLists: ['VIP Customers', 'Newsletter Subscribers'],
+      status: 'Sent',
+      emailsSent: 12450,
+      openRate: 28.5,
+      clickRate: 4.2,
+      bounceRate: 1.8
+    },
+    {
+      id: 2,
+      name: 'Product Launch Announcement',
+      subject: 'Introducing Our Latest Innovation',
+      sentDate: '2024-11-20',
+      sentTime: '02:30 PM',
+      senderEmail: 'news@company.com',
+      targetLists: ['All Customers'],
+      status: 'Sent',
+      emailsSent: 8920,
+      openRate: 32.1,
+      clickRate: 6.8,
+      bounceRate: 2.1
+    },
+    {
+      id: 3,
+      name: 'Weekly Newsletter #47',
+      subject: 'This Week in Tech: AI Breakthroughs',
+      sentDate: '2024-11-18',
+      sentTime: '10:00 AM',
+      senderEmail: 'newsletter@company.com',
+      targetLists: ['Newsletter Subscribers'],
+      status: 'Sent',
+      emailsSent: 5670,
+      openRate: 45.3,
+      clickRate: 8.9,
+      bounceRate: 1.2
+    },
+    {
+      id: 4,
+      name: 'Customer Feedback Survey',
+      subject: 'Help us improve - Quick 2-minute survey',
+      sentDate: '2024-11-15',
+      sentTime: '11:15 AM',
+      senderEmail: 'support@company.com',
+      targetLists: ['Recent Customers'],
+      status: 'Sent',
+      emailsSent: 3240,
+      openRate: 38.7,
+      clickRate: 12.4,
+      bounceRate: 0.9
+    },
+    {
+      id: 5,
+      name: 'Holiday Season Prep',
+      subject: 'Get Ready for the Holidays with Our Guide',
+      sentDate: '2024-12-01',
+      sentTime: '03:00 PM',
+      senderEmail: 'marketing@company.com',
+      targetLists: ['VIP Customers', 'Seasonal Shoppers'],
+      status: 'Scheduled',
+      emailsSent: 0,
+      openRate: 0,
+      clickRate: 0,
+      bounceRate: 0
+    },
+    {
+      id: 6,
+      name: 'Welcome Series - Part 1',
+      subject: 'Welcome! Here\'s what you need to know',
+      sentDate: '2024-11-10',
+      sentTime: '01:45 PM',
+      senderEmail: 'welcome@company.com',
+      targetLists: ['New Subscribers'],
+      status: 'Failed',
+      emailsSent: 450,
+      openRate: 0,
+      clickRate: 0,
+      bounceRate: 15.2
+    },
+    {
+      id: 7,
+      name: 'Cyber Monday Deals',
+      subject: 'Last Chance: Cyber Monday Exclusive Offers',
+      sentDate: '2024-11-28',
+      sentTime: '08:30 AM',
+      senderEmail: 'sales@company.com',
+      targetLists: ['All Customers', 'Cart Abandoners'],
+      status: 'In Progress',
+      emailsSent: 2340,
+      openRate: 15.2,
+      clickRate: 2.1,
+      bounceRate: 1.5
+    }
+  ],
+  chartData: [
+    { name: 'Nov 10', openRate: 38.7, clickRate: 8.2 },
+    { name: 'Nov 15', openRate: 38.7, clickRate: 12.4 },
+    { name: 'Nov 18', openRate: 45.3, clickRate: 8.9 },
+    { name: 'Nov 20', openRate: 32.1, clickRate: 6.8 },
+    { name: 'Nov 25', openRate: 28.5, clickRate: 4.2 },
+    { name: 'Nov 28', openRate: 15.2, clickRate: 2.1 }
+  ],
+  sidebarItems: [
+    { name: 'Dashboard', active: false },
+    { name: 'Campaigns', active: true },
+    { name: 'Templates', active: false },
+    { name: 'Contact Lists', active: false },
+    { name: 'Sender Emails', active: false },
+    { name: 'Domains', active: false },
+    { name: 'Settings', active: false }
+  ],
+  filteredCampaigns() {
+    return this.campaigns.filter(campaign => {
+      const matchesSearch = campaign.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+                           campaign.subject.toLowerCase().includes(this.searchTerm.toLowerCase());
+      const matchesStatus = this.statusFilter === 'All' || campaign.status === this.statusFilter;
+      const matchesSender = this.senderFilter === 'All' || campaign.senderEmail === this.senderFilter;
+      return matchesSearch && matchesStatus && matchesSender;
+    });
+  },
+  totalPages() {
+    return Math.ceil(this.filteredCampaigns().length / this.itemsPerPage);
+  },
+  paginatedCampaigns() {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    return this.filteredCampaigns().slice(startIndex, startIndex + this.itemsPerPage);
+  },
+  toggleRowExpansion(id) {
+    const newExpanded = new Set(this.expandedRows);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
+    } else {
+      newExpanded.add(id);
+    }
+    this.expandedRows = newExpanded;
+  },
+  getStatusColor(status) {
+    switch (status) {
+      case 'Sent': return 'bg-green-100 text-green-800 border-green-200';
+      case 'Scheduled': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'Failed': return 'bg-red-100 text-red-800 border-red-200';
+      case 'In Progress': return 'bg-blue-100 text-blue-800 border-blue-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  },
+  uniqueSenders() {
+    return [...new Set(this.campaigns.map(c => c.senderEmail))];
+  }
+}" x-init="{
+  // Initialize Lucide icons
+  Lucide.createIcons();
+  // Initialize Chart.js
+  const ctx = document.getElementById('performanceChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: chartData.map(item => item.name),
+      datasets: [
+        {
+          label: 'Open Rate %',
+          data: chartData.map(item => item.openRate),
+          backgroundColor: '#3b82f6',
+          borderColor: '#3b82f6',
+          borderWidth: 1
+        },
+        {
+          label: 'Click Rate %',
+          data: chartData.map(item => item.clickRate),
+          backgroundColor: '#10b981',
+          borderColor: '#10b981',
+          borderWidth: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          grid: { borderColor: '#f0f0f0', drawBorder: false }
+        },
+        y: {
+          grid: { borderColor: '#f0f0f0', drawBorder: false }
+        }
+      },
+      plugins: {
+        tooltip: {
+          backgroundColor: 'white',
+          borderColor: '#e5e7eb',
+          borderWidth: 1,
+          cornerRadius: 8,
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+        }
+      }
+    }
+  });
+}">
+  <!-- Main Container -->
+  <div class="flex h-screen bg-gray-50" x-show="filteredCampaigns().length > 0 || searchTerm !== '' || statusFilter !== 'All'">
+    <!-- Sidebar -->
+    <div class="w-64 bg-white shadow-sm border-r border-gray-200">
+      <div class="p-6 border-b border-gray-200">
+        <h1 class="text-xl font-bold text-gray-900">EmailCraft</h1>
+      </div>
+      <nav class="mt-8">
+        <template x-for="item in sidebarItems" :key="item.name">
+          <a
+            href="#"
+            :class="item.active ? 'flex items-center px-6 py-3 text-sm font-medium text-blue-600 bg-blue-50 border-r-2 border-blue-600' : 'flex items-center px-6 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50'"
+            x-text="item.name"
+          ></a>
+        </template>
+      </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 overflow-auto">
+      <div class="p-8">
+        <!-- Header -->
+        <div class="mb-8">
+          <h1 class="text-3xl font-bold text-gray-900 mb-2">Sent Campaigns</h1>
+          <p class="text-gray-600">Track and analyze your email campaign performance</p>
+        </div>
+
+        <!-- Performance Chart -->
+        <!-- <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <i data-lucide="trending-up" class="w-5 h-5"></i>
+            Recent Campaign Performance
+          </h2>
+          <div class="chart-container">
+            <canvas id="performanceChart"></canvas>
+          </div>
+        </div> -->
+
+        <!-- Controls -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+          <div class="flex flex-wrap items-center gap-4">
+            <!-- Search -->
+            <div class="relative flex-1 min-w-64">
+              <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5"></i>
+              <input
+                type="text"
+                placeholder="Search campaigns..."
+                x-model="searchTerm"
+                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <!-- Filters -->
+            <div class="flex items-center gap-3">
+              <select
+                x-model="statusFilter"
+                class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="All">All Status</option>
+                <option value="Sent">Sent</option>
+                <option value="Scheduled">Scheduled</option>
+                <option value="Failed">Failed</option>
+                <option value="In Progress">In Progress</option>
+              </select>
+
+              <select
+                x-model="senderFilter"
+                class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="All">All Senders</option>
+                <template x-for="sender in uniqueSenders()" :key="sender">
+                  <option :value="sender" x-text="sender"></option>
+                </template>
+              </select>
+
+              <button class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                New Campaign
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Campaigns List -->
+        <div class="space-y-4">
+          <template x-for="campaign in paginatedCampaigns()" :key="campaign.id">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center gap-4">
+                    <h3 class="text-lg font-semibold text-gray-900" x-text="campaign.name"></h3>
+                    <span :class="'inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ' + getStatusColor(campaign.status)">
+                      <span x-show="campaign.status === 'Sent'"><i data-lucide="check-circle" class="w-4 h-4"></i></span>
+                      <span x-show="campaign.status === 'Scheduled'"><i data-lucide="clock" class="w-4 h-4"></i></span>
+                      <span x-show="campaign.status === 'Failed'"><i data-lucide="x-circle" class="w-4 h-4"></i></span>
+                      <span x-show="campaign.status === 'In Progress'"><i data-lucide="play" class="w-4 h-4"></i></span>
+                      <span x-text="campaign.status"></span>
+                    </span>
+                  </div>
+                  <button
+                    @click="toggleRowExpansion(campaign.id)"
+                    class="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <i x-show="!expandedRows.has(campaign.id)" data-lucide="chevron-down" class="w-5 h-5"></i>
+                    <i x-show="expandedRows.has(campaign.id)" data-lucide="chevron-up" class="w-5 h-5"></i>
+                  </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-4">
+                  <div>
+                    <p class="text-sm text-gray-500 mb-1">Subject</p>
+                    <p class="text-sm font-medium text-gray-900" x-text="campaign.subject"></p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-500 mb-1">Sent Date</p>
+                    <p class="text-sm font-medium text-gray-900 flex items-center gap-1">
+                      <i data-lucide="calendar" class="w-4 h-4"></i>
+                      <span x-text="campaign.sentDate + ' at ' + campaign.sentTime"></span>
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-500 mb-1">Sender</p>
+                    <p class="text-sm font-medium text-gray-900" x-text="campaign.senderEmail"></p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-500 mb-1">Target Lists</p>
+                    <p class="text-sm font-medium text-gray-900 flex items-center gap-1">
+                      <i data-lucide="users" class="w-4 h-4"></i>
+                      <span x-text="campaign.targetLists.join(', ')"></span>
+                    </p>
+                  </div>
+                </div>
+
+                <div x-show="campaign.status !== 'Scheduled'" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                  <div class="bg-gray-50 rounded-lg p-3">
+                    <p class="text-xs text-gray-500 mb-1">Emails Sent</p>
+                    <p class="text-xl font-bold text-gray-900 flex items-center gap-1">
+                      <i data-lucide="mail" class="w-4 h-4"></i>
+                      <span x-text="campaign.emailsSent.toLocaleString()"></span>
+                    </p>
+                  </div>
+                  <div class="bg-green-50 rounded-lg p-3">
+                    <p class="text-xs text-gray-500 mb-1">Open Rate</p>
+                    <p class="text-xl font-bold text-green-600 flex items-center gap-1">
+                      <i data-lucide="eye" class="w-4 h-4"></i>
+                      <span x-text="campaign.openRate + '%'"></span>
+                    </p>
+                  </div>
+                  <div class="bg-blue-50 rounded-lg p-3">
+                    <p class="text-xs text-gray-500 mb-1">Click Rate</p>
+                    <p class="text-xl font-bold text-blue-600 flex items-center gap-1">
+                      <i data-lucide="mouse-pointer" class="w-4 h-4"></i>
+                      <span x-text="campaign.clickRate + '%'"></span>
+                    </p>
+                  </div>
+                  <div class="bg-red-50 rounded-lg p-3">
+                    <p class="text-xs text-gray-500 mb-1">Bounce Rate</p>
+                    <p class="text-xl font-bold text-red-600 flex items-center gap-1">
+                      <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                      <span x-text="campaign.bounceRate + '%'"></span>
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Expanded Content -->
+                <div x-show="expandedRows.has(campaign.id)" class="border-t border-gray-200 pt-4 mt-4" x-cloak>
+                  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                      <h4 class="font-medium text-gray-900 mb-2">Campaign Details</h4>
+                      <div class="space-y-2 text-sm">
+                        <p><span class="text-gray-500">Full Subject:</span> <span x-text="campaign.subject"></span></p>
+                        <p><span class="text-gray-500">Target Lists:</span> <span x-text="campaign.targetLists.join(', ')"></span></p>
+                        <p><span class="text-gray-500">Campaign ID:</span> #<span x-text="campaign.id"></span></p>
+                      </div>
+                    </div>
+                    <div>
+                      <h4 class="font-medium text-gray-900 mb-2">Performance by List</h4>
+                      <div class="space-y-2 text-sm">
+                        <template x-for="(list, index) in campaign.targetLists" :key="index">
+                          <div class="flex justify-between">
+                            <span class="text-gray-500" x-text="list + ':'"></span>
+                            <span class="font-medium" x-text="Math.floor(Math.random() * 20 + 15) + '% open rate'"></span>
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex items-center gap-3 pt-4 border-t border-gray-200">
+                  <button class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                    View Report
+                  </button>
+                  <button class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+                    <i data-lucide="copy" class="w-4 h-4"></i>
+                    Duplicate
+                  </button>
+                  <button class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+                    <i data-lucide="archive" class="w-4 h-4"></i>
+                    Archive
+                  </button>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Pagination -->
+        <div x-show="totalPages() > 1" class="flex items-center justify-between mt-8">
+          <p class="text-sm text-gray-700">
+            Showing <span x-text="(currentPage - 1) * itemsPerPage + 1"></span> to 
+            <span x-text="Math.min((currentPage - 1) * itemsPerPage + itemsPerPage, filteredCampaigns().length)"></span> of 
+            <span x-text="filteredCampaigns().length"></span> campaigns
+          </p>
+          <div class="flex items-center gap-2">
+            <button
+              @click="currentPage = Math.max(1, currentPage - 1)"
+              :disabled="currentPage === 1"
+              class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <template x-for="page in Array.from({ length: totalPages() }, (_, i) => i + 1)" :key="page">
+              <button
+                @click="currentPage = page"
+                :class="currentPage === page ? 'px-3 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white' : 'px-3 py-2 text-sm font-medium rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100'"
+                x-text="page"
+              ></button>
+            </template>
+            <button
+              @click="currentPage = Math.min(totalPages(), currentPage + 1)"
+              :disabled="currentPage === totalPages()"
+              class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div
+    class="flex h-screen bg-gray-50"
+    x-show="filteredCampaigns().length === 0 && searchTerm === '' && statusFilter === 'All'"
+    x-cloak
+  >
+    <!-- Sidebar -->
+    <div class="w-64 bg-white shadow-sm border-r border-gray-200">
+      <div class="p-6 border-b border-gray-200">
+        <h1 class="text-xl font-bold text-gray-900">EmailCraft</h1>
+      </div>
+      <nav class="mt-8">
+        <template x-for="item in sidebarItems" :key="item.name">
+          <a
+            href="#"
+            :class="item.active ? 'flex items-center px-6 py-3 text-sm font-medium text-blue-600 bg-blue-50 border-r-2 border-blue-600' : 'flex items-center px-6 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50'"
+            x-text="item.name"
+          ></a>
+        </template>
+      </nav>
+    </div>
+
+    <!-- Empty State Content -->
+    <div class="flex-1 flex items-center justify-center">
+      <div class="text-center">
+        <div class="mx-auto w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center mb-8">
+          <i data-lucide="mail" class="w-16 h-16 text-gray-400"></i>
+        </div>
+        <h2 class="text-2xl font-semibold text-gray-900 mb-4">
+          You haven't sent any campaigns yet
+        </h2>
+        <p class="text-gray-500 mb-8 max-w-md">
+          Create your first email campaign to reach your audience and track your performance.
+        </p>
+        <button class="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2 mx-auto">
+          <i data-lucide="plus" class="w-5 h-5"></i>
+          Create Your First Campaign
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Настройки аккаунта</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body 
+  x-data="accountSettings()" 
+  x-init="lucide.createIcons(); loadPlans()" 
+  class="min-h-screen bg-gray-50 flex"
+>
+
+  <!-- Sidebar Overlay -->
+  <div x-show="sidebarOpen" class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" @click="sidebarOpen = false"></div>
+
+  <!-- Sidebar -->
+  <div class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform lg:translate-x-0 lg:static lg:inset-0"
+       :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+    <div class="flex items-center justify-between h-16 px-6 border-b">
+      <h1 class="text-xl font-semibold">MailCRM</h1>
+      <button @click="sidebarOpen = false" class="lg:hidden p-2 hover:bg-gray-100 rounded">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+    <nav class="mt-6 px-3 space-y-1">
+      <a href="#" class="flex items-center px-3 py-2 rounded hover:bg-gray-100 text-gray-700">
+        <i data-lucide="layout-dashboard" class="w-5 h-5 mr-3"></i> Панель
+      </a>
+      <a href="#" class="flex items-center px-3 py-2 rounded hover:bg-gray-100 text-gray-700">
+        <i data-lucide="megaphone" class="w-5 h-5 mr-3"></i> Кампании
+      </a>
+      <a href="#" class="flex items-center px-3 py-2 rounded hover:bg-gray-100 text-gray-700">
+        <i data-lucide="file-text" class="w-5 h-5 mr-3"></i> Шаблоны
+      </a>
+      <a href="#" class="flex items-center px-3 py-2 rounded hover:bg-gray-100 text-gray-700">
+        <i data-lucide="users" class="w-5 h-5 mr-3"></i> Контакты
+      </a>
+      <a href="#" class="flex items-center px-3 py-2 rounded hover:bg-gray-100 text-gray-700">
+        <i data-lucide="globe" class="w-5 h-5 mr-3"></i> Домены
+      </a>
+      <a href="#" class="flex items-center px-3 py-2 rounded bg-blue-50 text-blue-700 border-r-2 border-blue-700">
+        <i data-lucide="settings" class="w-5 h-5 mr-3"></i> Настройки
+      </a>
+    </nav>
+  </div>
+
+  <!-- Main -->
+  <div class="flex-1 lg:ml-0">
+    <header class="bg-white shadow border-b">
+      <div class="px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center">
+          <button @click="sidebarOpen = true" class="lg:hidden p-2 hover:bg-gray-100 rounded mr-2">
+            <i data-lucide="settings" class="w-5 h-5"></i>
+          </button>
+          <h1 class="text-2xl font-semibold">Настройки аккаунта</h1>
+        </div>
+        <template x-if="saving">
+          <div class="flex items-center text-gray-600 text-sm">
+            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div> Сохранение...
+          </div>
+        </template>
+      </div>
+    </header>
+
+    <div class="p-6">
+      <div class="max-w-4xl mx-auto">
+
+        <!-- Сообщения Django -->
+        {% if messages %}
+          <div class="mb-6 space-y-2">
+            {% for msg in messages %}
+              <div class="px-4 py-2 rounded {{ msg.tags }}">
+                {{ msg }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <!-- Вкладки -->
+        <div class="border-b mb-8">
+          <nav class="-mb-px flex space-x-8 overflow-x-auto">
+            <button @click="activeTab = 'basic'"
+                    class="py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap"
+                    :class="activeTab==='basic' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'">
+              Основное
+            </button>
+            <button @click="activeTab = 'security'"
+                    class="py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap"
+                    :class="activeTab==='security' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'">
+              Безопасность
+            </button>
+            <button @click="activeTab = 'billing'"
+                    class="py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap"
+                    :class="activeTab==='billing' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'">
+              Тарифы
+            </button>
+            <button @click="activeTab = 'danger'"
+                    class="py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap"
+                    :class="activeTab==='danger' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'">
+              Удаление
+            </button>
+          </nav>
+        </div>
+
+        <div class="bg-white rounded shadow border">
+
+          <!-- Основное -->
+          <div x-show="activeTab==='basic'" class="p-6 space-y-6">
+            <h3 class="text-lg font-medium">Основная информация</h3>
+            <div>
+              <label class="block text-sm font-medium mb-1">Полное имя</label>
+              <input type="text" x-model="fullName" @input="updateName()"
+                     class="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-blue-300">
+              <template x-if="errors.name">
+                <p class="text-red-600 text-sm mt-1" x-text="errors.name"></p>
+              </template>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Email</label>
+              <input type="email" value="{{ request.user.email }}" disabled
+                     class="w-full px-3 py-2 border rounded bg-gray-50">
+            </div>
+          </div>
+
+          <!-- Безопасность -->
+          <div x-show="activeTab==='security'" class="p-6 space-y-6">
+            <h3 class="text-lg font-medium">Смена пароля</h3>
+            <div>
+              <label class="block text-sm font-medium mb-1">Текущий пароль</label>
+              <input :type="showCurrent ? 'text' : 'password'" x-model="currentPassword"
+                     class="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-blue-300">
+              <button type="button" class="absolute right-3 top-9" @click="showCurrent = !showCurrent">
+                <i :data-lucide="showCurrent ? 'eye-off' : 'eye'"></i>
+              </button>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Новый пароль</label>
+              <input :type="showNew ? 'text' : 'password'" x-model="newPassword"
+                     class="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-blue-300">
+              <button type="button" class="absolute right-3 top-9" @click="showNew = !showNew">
+                <i :data-lucide="showNew ? 'eye-off' : 'eye'"></i>
+              </button>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Подтвердите пароль</label>
+              <input :type="showConfirm ? 'text' : 'password'" x-model="confirmPassword"
+                     class="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-blue-300">
+              <button type="button" class="absolute right-3 top-9" @click="showConfirm = !showConfirm">
+                <i :data-lucide="showConfirm ? 'eye-off' : 'eye'"></i>
+              </button>
+            </div>
+            <template x-if="errors.password">
+              <p class="text-red-600 text-sm" x-text="errors.password"></p>
+            </template>
+            <button @click="changePassword()"
+                    :disabled="!canChange"
+                    class="px-4 py-2 rounded text-white"
+                    :class="canChange ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'">
+              Сменить пароль
+            </button>
+          </div>
+
+          <!-- Тарифы -->
+          <div x-show="activeTab==='billing'" class="p-6 space-y-6">
+            <h3 class="text-lg font-medium">Тариф и история</h3>
+            <template x-for="plan in plans" :key="plan.start_date">
+              <div class="bg-gray-50 p-4 rounded space-y-2">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <p class="font-semibold" x-text="plan.plan"></p>
+                    <p class="text-sm" x-text="plan.start_date + ' — ' + plan.end_date"></p>
+                  </div>
+                  <span class="px-2 py-0.5 text-xs rounded-full text-white"
+                        :class="plan.is_active ? 'bg-green-600' : 'bg-gray-500'"
+                        x-text="plan.is_active ? 'Активен' : 'Истёк'"></span>
+                </div>
+                <button x-show="!plan.is_active"
+                        @click="/* редирект на оплату */"
+                        class="text-blue-600 text-sm underline">
+                  Обновить тариф
+                </button>
+              </div>
+            </template>
+          </div>
+
+          <!-- Удаление -->
+          <div x-show="activeTab==='danger'" class="p-6">
+            <h3 class="text-lg font-medium text-red-800">Удаление аккаунта</h3>
+            <p class="text-sm text-red-700 mb-4">
+              Действие необратимо. Все данные будут удалены.
+            </p>
+            <div>
+              <label class="block text-sm font-medium mb-1">Пароль</label>
+              <input type="password" x-model="deletePassword"
+                     class="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-red-300">
+            </div>
+            <button @click="deleteAccount()"
+                    :disabled="!deletePassword"
+                    class="mt-4 px-4 py-2 rounded text-white"
+                    :class="deletePassword ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-300 cursor-not-allowed'">
+              Удалить аккаунт
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+function accountSettings() {
+  return {
+    sidebarOpen: false,
+    activeTab: 'basic',
+    saving: false,
+
+    fullName: '{{ request.user.full_name|escapejs }}',
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+    deletePassword: '',
+    showCurrent: false,
+    showNew: false,
+    showConfirm: false,
+
+    plans: [],
+    errors: {},
+
+    get canChange() {
+      return this.currentPassword && this.newPassword
+          && this.newPassword === this.confirmPassword;
+    },
+
+    async updateName() {
+      this.saving = true;
+      this.errors.name = '';
+      const res = await fetch('{% url "accounts:api-profile" %}', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ full_name: this.fullName })
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        this.errors.name = data.full_name?.[0] || 'Ошибка сохранения';
+      }
+      this.saving = false;
+    },
+
+    async changePassword() {
+      this.errors.password = '';
+      const res = await fetch('{% url "accounts:api-password-change" %}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+          current_password: this.currentPassword,
+          new_password: this.newPassword
+        })
+      });
+      if (res.ok) {
+        this.currentPassword = this.newPassword = this.confirmPassword = '';
+      } else {
+        const data = await res.json();
+        this.errors.password = Object.values(data).flat().join(' ');
+      }
+    },
+
+    async loadPlans() {
+      const res = await fetch('{% url "accounts:api-plans" %}');
+      this.plans = await res.json();
+    },
+
+    async deleteAccount() {
+      this.errors.delete = '';
+      const res = await fetch('{% url "accounts:api-delete-account" %}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ current_password: this.deletePassword })
+      });
+      if (res.status === 204) {
+        window.location.href = '{% url "home" %}';
+      } else {
+        this.errors.delete = 'Неверный пароль';
+      }
+    }
+  }
+}
+</script>
+
+</body>
+</html>

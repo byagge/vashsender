@@ -1,0 +1,1 @@
+v=spf1 include:emailpro.com ~all

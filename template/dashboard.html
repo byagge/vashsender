@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+        }
+
+        .chart-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+        }
+
+        .button-gradient {
+            background: #3B82F6;
+            transition: all 0.3s ease;
+        }
+
+        .button-gradient:hover {
+            background: #2563EB;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .nav-button {
+            transition: all 0.2s ease;
+        }
+
+        .nav-button:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .stat-icon {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .sidebar-pattern {
+            position: absolute;
+            inset: 0;
+            opacity: 0.1;
+        }
+
+        .sidebar-pattern::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom right, #EBF5FF, #E0E7FF);
+        }
+
+        .sidebar-pattern::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 8rem;
+            height: 8rem;
+            background: linear-gradient(to bottom left, #DBEAFE, transparent);
+            border-radius: 9999px;
+            filter: blur(2rem);
+        }
+
+        .main-content {
+            margin-left: 16rem; /* 64 * 4 = 256px (w-64) */
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .period-selector {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .header-actions {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .campaigns-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .templates-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div x-data="{ selectedPeriod: '7d', sidebarOpen: false }" class="min-h-screen">
+        <!-- Sidebar -->
+        <aside class="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 shadow-sm hidden md:flex flex-col z-50">
+            <!-- Фоновые паттерны -->
+            <div class="sidebar-pattern"></div>
+
+            <div class="relative z-10 flex flex-col h-full">
+                <!-- Логотип / Бренд -->
+                <div class="p-6 pb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg">
+                            <i data-lucide="mail" class="w-4 h-4 text-white"></i>
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-800">Mail</h2>
+                    </div>
+                </div>
+
+                <!-- Навигация -->
+                <nav class="flex-1 px-3 py-6 space-y-1">
+                    <!-- Списки -->
+                    <a href="#" class="group flex items-center px-3 py-3 rounded-xl transition-all duration-200 hover:bg-blue-50 hover:scale-[1.02]">
+                        <div class="flex items-center justify-center w-8 h-8 rounded-lg mr-3 bg-blue-100">
+                            <i data-lucide="list" class="w-4 h-4 text-blue-600"></i>
+                        </div>
+                        <span class="font-medium text-blue-700">Списки</span>
+                        <div class="ml-auto">
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-blue-500"></i>
+                        </div>
+                    </a>
+
+                    <!-- Шаблоны -->
+                    <a href="#" class="group flex items-center px-3 py-3 rounded-xl transition-all duration-200 hover:bg-blue-50 hover:scale-[1.02]">
+                        <div class="flex items-center justify-center w-8 h-8 rounded-lg mr-3 group-hover:bg-blue-100 transition-colors duration-200">
+                            <i data-lucide="layout" class="w-4 h-4 text-gray-500 group-hover:text-blue-600"></i>
+                        </div>
+                        <span class="font-medium text-gray-700 group-hover:text-blue-700 transition-colors duration-200">Шаблоны</span>
+                        <div class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-blue-500"></i>
+                        </div>
+                    </a>
+
+                    <!-- Аналитика -->
+                    <a href="#" class="group flex items-center px-3 py-3 rounded-xl transition-all duration-200 hover:bg-blue-50 hover:scale-[1.02]">
+                        <div class="flex items-center justify-center w-8 h-8 rounded-lg mr-3 group-hover:bg-blue-100 transition-colors duration-200">
+                            <i data-lucide="bar-chart-3" class="w-4 h-4 text-gray-500 group-hover:text-blue-600"></i>
+                        </div>
+                        <span class="font-medium text-gray-700 group-hover:text-blue-700 transition-colors duration-200">Аналитика</span>
+                        <div class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-blue-500"></i>
+                        </div>
+                    </a>
+
+                    <!-- Кампании -->
+                    <a href="#" class="group flex items-center px-3 py-3 rounded-xl transition-all duration-200 hover:bg-blue-50 hover:scale-[1.02]">
+                        <div class="flex items-center justify-center w-8 h-8 rounded-lg mr-3 group-hover:bg-blue-100 transition-colors duration-200">
+                            <i data-lucide="send" class="w-4 h-4 text-gray-500 group-hover:text-blue-600"></i>
+                        </div>
+                        <span class="font-medium text-gray-700 group-hover:text-blue-700 transition-colors duration-200">Кампании</span>
+                        <div class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-blue-500"></i>
+                        </div>
+                    </a>
+
+                    <!-- Разделитель -->
+                    <div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent my-4"></div>
+
+                    <!-- Настройки -->
+                    <a href="#" class="group flex items-center px-3 py-3 rounded-xl transition-all duration-200 hover:bg-blue-50 hover:scale-[1.02]">
+                        <div class="flex items-center justify-center w-8 h-8 rounded-lg mr-3 group-hover:bg-blue-100 transition-colors duration-200">
+                            <i data-lucide="settings" class="w-4 h-4 text-gray-500 group-hover:text-blue-600"></i>
+                        </div>
+                        <span class="font-medium text-gray-700 group-hover:text-blue-700 transition-colors duration-200">Настройки</span>
+                        <div class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-blue-500"></i>
+                        </div>
+                    </a>
+
+                    <!-- Помощь -->
+                    <a href="#" class="group flex items-center px-3 py-3 rounded-xl transition-all duration-200 hover:bg-blue-50 hover:scale-[1.02]">
+                        <div class="flex items-center justify-center w-8 h-8 rounded-lg mr-3 group-hover:bg-blue-100 transition-colors duration-200">
+                            <i data-lucide="help-circle" class="w-4 h-4 text-gray-500 group-hover:text-blue-600"></i>
+                        </div>
+                        <span class="font-medium text-gray-700 group-hover:text-blue-700 transition-colors duration-200">Помощь</span>
+                        <div class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-blue-500"></i>
+                        </div>
+                    </a>
+                </nav>
+
+                <!-- Профиль пользователя -->
+                <div class="mt-auto p-4 border-t border-gray-200 bg-gray-50/50">
+                    <div class="flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-white/80 transition-all duration-200 cursor-pointer group">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-md">
+                            <span class="text-white font-medium text-sm">АП</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-gray-800 font-medium text-sm truncate">Окулов Павел Миронович</p>
+                            <p class="text-gray-500 text-xs truncate">pavel@company.com</p>
+                        </div>
+                        <button class="opacity-60 group-hover:opacity-100 transition-opacity duration-200">
+                            <i data-lucide="more-horizontal" class="w-4 h-4 text-gray-500"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Мобильное меню -->
+        <div class="md:hidden fixed inset-0 bg-black/50 z-40" x-show="sidebarOpen" @click="sidebarOpen = false"></div>
+        <aside class="md:hidden fixed inset-y-0 left-0 w-64 bg-white z-50 transform transition-transform duration-300" 
+               :class="{'translate-x-0': sidebarOpen, '-translate-x-full': !sidebarOpen}">
+            <!-- Содержимое мобильного меню такое же, как в десктопной версии -->
+            <div class="sidebar-pattern"></div>
+            <div class="relative z-10 flex flex-col h-full">
+                <!-- Логотип / Бренд -->
+                <div class="p-6 pb-4 flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg">
+                            <i data-lucide="mail" class="w-4 h-4 text-white"></i>
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-800">Mail</h2>
+                    </div>
+                    <button @click="sidebarOpen = false" class="p-2 rounded-lg hover:bg-gray-100">
+                        <i data-lucide="x" class="w-5 h-5 text-gray-500"></i>
+                    </button>
+                </div>
+
+                <!-- Навигация (такая же, как в десктопной версии) -->
+                <nav class="flex-1 px-3 py-6 space-y-1">
+                    <!-- ... (копируем навигацию из десктопной версии) ... -->
+                </nav>
+
+                <!-- Профиль пользователя (такой же, как в десктопной версии) -->
+                <div class="mt-auto p-4 border-t border-gray-200 bg-gray-50/50">
+                    <!-- ... (копируем профиль из десктопной версии) ... -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- Основной контент -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="bg-white border-b border-gray-200 px-4 sm:px-6 py-4 sticky top-0 z-30 shadow-sm">
+                <div class="flex items-center justify-between max-w-7xl mx-auto header-content">
+                    <div class="flex items-center space-x-4">
+                        <button @click="sidebarOpen = true" class="md:hidden p-2 rounded-lg hover:bg-gray-100">
+                            <i data-lucide="menu" class="w-5 h-5 text-gray-600"></i>
+                        </button>
+                        <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
+                        <div class="flex items-center space-x-2 bg-gray-100 rounded-lg p-1 period-selector">
+                            <button 
+                                x-on:click="selectedPeriod = '7d'" 
+                                :class="{ 'bg-white text-blue-600 shadow-sm': selectedPeriod === '7d', 'text-gray-600 hover:text-gray-900': selectedPeriod !== '7d' }" 
+                                class="px-3 py-1 rounded-md text-sm font-medium transition-all duration-200"
+                            >7 дней</button>
+                            <button 
+                                x-on:click="selectedPeriod = '30d'" 
+                                :class="{ 'bg-white text-blue-600 shadow-sm': selectedPeriod === '30d', 'text-gray-600 hover:text-gray-900': selectedPeriod !== '30d' }" 
+                                class="px-3 py-1 rounded-md text-sm font-medium transition-all duration-200"
+                            >30 дней</button>
+                            <button 
+                                x-on:click="selectedPeriod = '90d'" 
+                                :class="{ 'bg-white text-blue-600 shadow-sm': selectedPeriod === '90d', 'text-gray-600 hover:text-gray-900': selectedPeriod !== '90d' }" 
+                                class="px-3 py-1 rounded-md text-sm font-medium transition-all duration-200"
+                            >90 дней</button>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3 header-actions">
+                        <button class="p-2 rounded-lg hover:bg-gray-100 transition-all duration-200">
+                            <i data-lucide="bell" class="w-5 h-5 text-gray-600"></i>
+                        </button>
+                        <button class="p-2 rounded-lg hover:bg-gray-100 transition-all duration-200">
+                            <i data-lucide="settings" class="w-5 h-5 text-gray-600"></i>
+                        </button>
+                        <button class="button-gradient text-white px-4 py-2 rounded-lg flex items-center space-x-2">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            <span>Создать рассылку</span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Основной контент -->
+            <div class="p-4 sm:p-6 max-w-7xl mx-auto">
+                <!-- Stats Overview -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 stats-grid">
+                    <div class="stat-card rounded-xl p-4 sm:p-6 card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 mb-1">Отправлено писем</p>
+                                <p class="text-2xl font-bold text-gray-900">24,580</p>
+                                <p class="text-sm mt-1 text-green-600 flex items-center">
+                                    <i data-lucide="trending-up" class="w-4 h-4 mr-1"></i>
+                                    +12% за неделю
+                                </p>
+                            </div>
+                            <div class="stat-icon p-3 rounded-lg">
+                                <i data-lucide="mail" class="w-6 h-6 text-blue-600"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card rounded-xl p-4 sm:p-6 card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 mb-1">Открыто писем</p>
+                                <p class="text-2xl font-bold text-gray-900">18,240</p>
+                                <p class="text-sm mt-1 text-green-600 flex items-center">
+                                    <i data-lucide="trending-up" class="w-4 h-4 mr-1"></i>
+                                    +8% за неделю
+                                </p>
+                            </div>
+                            <div class="stat-icon p-3 rounded-lg">
+                                <i data-lucide="eye" class="w-6 h-6 text-blue-600"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card rounded-xl p-4 sm:p-6 card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 mb-1">Переходы по ссылкам</p>
+                                <p class="text-2xl font-bold text-gray-900">2,840</p>
+                                <p class="text-sm mt-1 text-green-600 flex items-center">
+                                    <i data-lucide="trending-up" class="w-4 h-4 mr-1"></i>
+                                    +15% за неделю
+                                </p>
+                            </div>
+                            <div class="stat-icon p-3 rounded-lg">
+                                <i data-lucide="mouse-pointer" class="w-6 h-6 text-blue-600"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card rounded-xl p-4 sm:p-6 card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 mb-1">Новые подписчики</p>
+                                <p class="text-2xl font-bold text-gray-900">1,420</p>
+                                <p class="text-sm mt-1 text-green-600 flex items-center">
+                                    <i data-lucide="trending-up" class="w-4 h-4 mr-1"></i>
+                                    +25% за неделю
+                                </p>
+                            </div>
+                            <div class="stat-icon p-3 rounded-lg">
+                                <i data-lucide="user-plus" class="w-6 h-6 text-blue-600"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 charts-grid">
+                    <!-- Activity Chart -->
+                    <div class="lg:col-span-2 chart-card rounded-xl p-4 sm:p-6 card-hover">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                            <h3 class="text-lg font-semibold text-gray-900">Активность за неделю</h3>
+                            <div class="flex flex-wrap items-center gap-4 text-sm">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-3 h-3 rounded-full bg-blue-600"></div>
+                                    <span class="text-gray-600">Отправлено</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-gray-600">Открыто</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <span class="text-gray-600">Кликнуто</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="relative" style="height: 300px;">
+                            <canvas id="activityChart"></canvas>
+                        </div>
+                    </div>
+                    <!-- Engagement Pie Chart -->
+                    <div class="chart-card rounded-xl p-4 sm:p-6 card-hover">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-6">Вовлеченность</h3>
+                        <div class="relative" style="height: 200px;">
+                            <canvas id="engagementChart"></canvas>
+                        </div>
+                        <div class="mt-4 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-3 h-3 rounded-full bg-[#3B82F6]"></div>
+                                    <span class="text-sm text-gray-600">Доставлено</span>
+                                </div>
+                                <span class="text-sm font-medium text-gray-900">85%</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-3 h-3 rounded-full bg-[#10B981]"></div>
+                                    <span class="text-sm text-gray-600">Открыто</span>
+                                </div>
+                                <span class="text-sm font-medium text-gray-900">65%</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-3 h-3 rounded-full bg-[#F59E0B]"></div>
+                                    <span class="text-sm text-gray-600">Кликнуто</span>
+                                </div>
+                                <span class="text-sm font-medium text-gray-900">12%</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-3 h-3 rounded-full bg-[#EF4444]"></div>
+                                    <span class="text-sm text-gray-600">Отписались</span>
+                                </div>
+                                <span class="text-sm font-medium text-gray-900">3%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Campaigns and Quick Actions/Lists -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 campaigns-grid">
+                    <!-- Recent Campaigns -->
+                    <div class="lg:col-span-2 chart-card rounded-xl p-4 sm:p-6 card-hover">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                            <h3 class="text-lg font-semibold text-gray-900">Недавние кампании</h3>
+                            <button class="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center space-x-1 transition-colors">
+                                <span>Все кампании</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">Летняя распродажа 2025</h4>
+                                        <p class="text-sm text-gray-600">28 мая</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-6 text-sm text-gray-600">
+                                    <div class="text-center">
+                                        <p class="font-medium text-gray-900">15,420</p>
+                                        <p>Отправлено</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="font-medium text-gray-900">4,850</p>
+                                        <p>Открыто</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="font-medium text-gray-900">720</p>
+                                        <p>Клики</p>
+                                    </div>
+                                    <button class="p-1 rounded hover:bg-gray-200 transition-colors">
+                                        <i data-lucide="more-vertical" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">Добро пожаловать новичкам</h4>
+                                        <p class="text-sm text-gray-600">30 мая</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-6 text-sm text-gray-600">
+                                    <div class="text-center">
+                                        <p class="font-medium text-gray-900">0</p>
+                                        <p>Отправлено</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="font-medium text-gray-900">0</p>
+                                        <p>Открыто</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="font-medium text-gray-900">0</p>
+                                        <p>Клики</p>
+                                    </div>
+                                    <button class="p-1 rounded hover:bg-gray-200 transition-colors">
+                                        <i data-lucide="more-vertical" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">Еженедельная рассылка #24</h4>
+                                        <p class="text-sm text-gray-600">27 мая</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-6 text-sm text-gray-600">
+                                    <div class="text-center">
+                                        <p class="font-medium text-gray-900">8,730</p>
+                                        <p>Отправлено</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="font-medium text-gray-900">2,920</p>
+                                        <p>Открыто</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="font-medium text-gray-900">380</p>
+                                        <p>Клики</p>
+                                    </div>
+                                    <button class="p-1 rounded hover:bg-gray-200 transition-colors">
+                                        <i data-lucide="more-vertical" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-3 h-3 rounded-full bg-gray-400"></div>
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">Персональные рекомендации</h4>
+                                        <p class="text-sm text-gray-600">25 мая</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-6 text-sm text-gray-600">
+                                    <div class="text-center">
+                                        <p class="font-medium text-gray-900">12,500</p>
+                                        <p>Отправлено</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="font-medium text-gray-900">6,200</p>
+                                        <p>Открыто</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="font-medium text-gray-900">950</p>
+                                        <p>Клики</p>
+                                    </div>
+                                    <button class="p-1 rounded hover:bg-gray-200 transition-colors">
+                                        <i data-lucide="more-vertical" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions & Contact Lists -->
+                    <div class="space-y-6">
+                        <!-- Quick Actions -->
+                        <div class="chart-card rounded-xl p-4 sm:p-6 card-hover">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Быстрые действия</h3>
+                            <div class="space-y-3">
+                                <button x-on:click="alert('Создать кампанию')" class="w-full text-left p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all group">
+                                    <div class="flex items-start space-x-3">
+                                        <div class="p-2 rounded-lg bg-blue-50 group-hover:bg-blue-100 transition-colors">
+                                            <i data-lucide="mail" class="w-5 h-5 text-blue-600"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-medium text-gray-900 mb-1">Создать кампанию</h4>
+                                            <p class="text-sm text-gray-600">Новая email рассылка</p>
+                                        </div>
+                                    </div>
+                                </button>
+                                <button x-on:click="alert('Импорт контактов')" class="w-full text-left p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all group">
+                                    <div class="flex items-start space-x-3">
+                                        <div class="p-2 rounded-lg bg-blue-50 group-hover:bg-blue-100 transition-colors">
+                                            <i data-lucide="user-plus" class="w-5 h-5 text-blue-600"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-medium text-gray-900 mb-1">Импорт контактов</h4>
+                                            <p class="text-sm text-gray-600">Загрузить CSV файл</p>
+                                        </div>
+                                    </div>
+                                </button>
+                                <button x-on:click="alert('Новый шаблон')" class="w-full text-left p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all group">
+                                    <div class="flex items-start space-x-3">
+                                        <div class="p-2 rounded-lg bg-blue-50 group-hover:bg-blue-100 transition-colors">
+                                            <i data-lucide="plus" class="w-5 h-5 text-blue-600"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-medium text-gray-900 mb-1">Новый шаблон</h4>
+                                            <p class="text-sm text-gray-600">Создать дизайн письма</p>
+                                        </div>
+                                    </div>
+                                </button>
+                                <button x-on:click="alert('Отчеты')" class="w-full text-left p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all group">
+                                    <div class="flex items-start space-x-3">
+                                        <div class="p-2 rounded-lg bg-blue-50 group-hover:bg-blue-100 transition-colors">
+                                            <i data-lucide="trending-up" class="w-5 h-5 text-blue-600"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-medium text-gray-900 mb-1">Отчеты</h4>
+                                            <p class="text-sm text-gray-600">Просмотр аналитики</p>
+                                        </div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Contact Lists -->
+                        <div class="chart-card rounded-xl p-4 sm:p-6 card-hover">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Списки контактов</h3>
+                                <button class="text-blue-600 hover:text-blue-700 text-sm font-medium">Все списки</button>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                                        <div>
+                                            <h4 class="font-medium text-gray-900 text-sm">VIP клиенты</h4>
+                                            <p class="text-xs text-gray-600">1,240 контактов</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs font-medium text-green-600">+5%</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                                        <div>
+                                            <h4 class="font-medium text-gray-900 text-sm">Новые подписчики</h4>
+                                            <p class="text-xs text-gray-600">3,580 контактов</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs font-medium text-green-600">+12%</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-2 h-2 rounded-full bg-gray-400"></div>
+                                        <div>
+                                            <h4 class="font-medium text-gray-900 text-sm">Неактивные пользователи</h4>
+                                            <p class="text-xs text-gray-600">890 контактов</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs font-medium text-red-600">-2%</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                                        <div>
+                                            <h4 class="font-medium text-gray-900 text-sm">Корпоративные клиенты</h4>
+                                            <p class="text-xs text-gray-600">560 контактов</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs font-medium text-green-600">+8%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Templates Section -->
+                <div class="mt-8 chart-card rounded-xl p-4 sm:p-6 card-hover">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Ваши шаблоны</h3>
+                        <button class="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center space-x-1 transition-colors">
+                            <span>Все шаблоны</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 templates-grid">
+                        <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer card-hover">
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center">
+                                    <i data-lucide="mail" class="w-6 h-6 text-white"></i>
+                                </div>
+                                <button class="p-1 rounded hover:bg-gray-100 transition-colors">
+                                    <i data-lucide="more-vertical" class="w-4 h-4 text-gray-400"></i>
+                                </button>
+                            </div>
+                            <h4 class="font-medium text-gray-900 mb-1">Приветственное письмо</h4>
+                            <p class="text-sm text-gray-600 mb-2">Для новых подписчиков</p>
+                            <p class="text-xs text-gray-500">Использован 2 дня назад</p>
+                        </div>
+                        <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer card-hover">
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center">
+                                    <i data-lucide="mail" class="w-6 h-6 text-white"></i>
+                                </div>
+                                <button class="p-1 rounded hover:bg-gray-100 transition-colors">
+                                    <i data-lucide="more-vertical" class="w-4 h-4 text-gray-400"></i>
+                                </button>
+                            </div>
+                            <h4 class="font-medium text-gray-900 mb-1">Распродажа</h4>
+                            <p class="text-sm text-gray-600 mb-2">Маркетинг</p>
+                            <p class="text-xs text-gray-500">Использован 5 дней назад</p>
+                        </div>
+                        <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer card-hover">
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center">
+                                    <i data-lucide="mail" class="w-6 h-6 text-white"></i>
+                                </div>
+                                <button class="p-1 rounded hover:bg-gray-100 transition-colors">
+                                    <i data-lucide="more-vertical" class="w-4 h-4 text-gray-400"></i>
+                                </button>
+                            </div>
+                            <h4 class="font-medium text-gray-900 mb-1">Новости компании</h4>
+                            <p class="text-sm text-gray-600 mb-2">Информационный</p>
+                            <p class="text-xs text-gray-500">Использован 1 день назад</p>
+                        </div>
+                        <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer card-hover">
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center">
+                                    <i data-lucide="plus" class="w-6 h-6 text-white"></i>
+                                </div>
+                                <button class="p-1 rounded hover:bg-gray-100 transition-colors">
+                                    <i data-lucide="more-vertical" class="w-4 h-4 text-gray-400"></i>
+                                </button>
+                            </div>
+                            <h4 class="font-medium text-gray-900 mb-1">Создать шаблон</h4>
+                            <p class="text-sm text-gray-600 mb-2">Новый дизайн</p>
+                            <p class="text-xs text-blue-600">Нажмите для создания</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ваши электронные почты -->
+                <div class="mt-8 chart-card rounded-xl p-4 sm:p-6 card-hover">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Ваши электронные почты</h3>
+                        <button class="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center space-x-1 transition-colors">
+                            <span>Управление почтами</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                                    <i data-lucide="mail" class="w-5 h-5 text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900">info@company.com</h4>
+                                    <p class="text-sm text-gray-600">Основной адрес</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <span class="text-sm text-green-600">Активен</span>
+                                <button class="p-1 rounded hover:bg-gray-200 transition-colors">
+                                    <i data-lucide="more-vertical" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                                    <i data-lucide="mail" class="w-5 h-5 text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900">support@company.com</h4>
+                                    <p class="text-sm text-gray-600">Поддержка</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <span class="text-sm text-green-600">Активен</span>
+                                <button class="p-1 rounded hover:bg-gray-200 transition-colors">
+                                    <i data-lucide="more-vertical" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                                    <i data-lucide="plus" class="w-5 h-5 text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900">Добавить почту</h4>
+                                    <p class="text-sm text-gray-600">Подключить новый адрес</p>
+                                </div>
+                            </div>
+                            <button class="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                                Добавить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ваши домены -->
+                <div class="mt-8 chart-card rounded-xl p-4 sm:p-6 card-hover">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Ваши домены</h3>
+                        <button class="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center space-x-1 transition-colors">
+                            <span>Управление доменами</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                                    <i data-lucide="globe" class="w-5 h-5 text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900">company.com</h4>
+                                    <p class="text-sm text-gray-600">Основной домен</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <span class="text-sm text-green-600">Проверен</span>
+                                <button class="p-1 rounded hover:bg-gray-200 transition-colors">
+                                    <i data-lucide="more-vertical" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                                    <i data-lucide="globe" class="w-5 h-5 text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900">shop.company.com</h4>
+                                    <p class="text-sm text-gray-600">Магазин</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <span class="text-sm text-green-600">Проверен</span>
+                                <button class="p-1 rounded hover:bg-gray-200 transition-colors">
+                                    <i data-lucide="more-vertical" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                                    <i data-lucide="plus" class="w-5 h-5 text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900">Добавить домен</h4>
+                                    <p class="text-sm text-gray-600">Подключить новый домен</p>
+                                </div>
+                            </div>
+                            <button class="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                                Добавить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Статистика по доменам -->
+                <div class="mt-8 chart-card rounded-xl p-4 sm:p-6 card-hover">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Статистика по доменам</h3>
+                        <div class="flex items-center space-x-2">
+                            <button class="px-3 py-1 rounded-md text-sm font-medium bg-blue-50 text-blue-600">Неделя</button>
+                            <button class="px-3 py-1 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100">Месяц</button>
+                            <button class="px-3 py-1 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100">Год</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="border border-gray-100 rounded-lg p-4">
+                            <h4 class="font-medium text-gray-900 mb-4">company.com</h4>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">Доставляемость</span>
+                                    <span class="text-sm font-medium text-gray-900">98.5%</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">Открытия</span>
+                                    <span class="text-sm font-medium text-gray-900">45.2%</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">Клики</span>
+                                    <span class="text-sm font-medium text-gray-900">12.8%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="border border-gray-100 rounded-lg p-4">
+                            <h4 class="font-medium text-gray-900 mb-4">shop.company.com</h4>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">Доставляемость</span>
+                                    <span class="text-sm font-medium text-gray-900">97.8%</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">Открытия</span>
+                                    <span class="text-sm font-medium text-gray-900">42.5%</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">Клики</span>
+                                    <span class="text-sm font-medium text-gray-900">15.3%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Инициализация иконок Lucide
+        lucide.createIcons();
+
+        // График активности
+        const activityChart = new Chart(document.getElementById('activityChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
+                datasets: [
+                    {
+                        label: 'Отправлено',
+                        data: [2400, 1398, 9800, 3908, 4800, 3800, 4300],
+                        backgroundColor: '#3B82F6',
+                        borderRadius: 4,
+                    },
+                    {
+                        label: 'Открыто',
+                        data: [1800, 1200, 7200, 2800, 3600, 2900, 3200],
+                        backgroundColor: '#10B981',
+                        borderRadius: 4,
+                    },
+                    {
+                        label: 'Кликнуто',
+                        data: [240, 180, 950, 420, 580, 380, 450],
+                        backgroundColor: '#F59E0B',
+                        borderRadius: 4,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        grid: {
+                            display: false,
+                        },
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                        },
+                    },
+                },
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        backgroundColor: 'white',
+                        borderColor: '#e5e7eb',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                        padding: 12,
+                        titleFont: {
+                            family: 'Inter',
+                            size: 14,
+                            weight: '600',
+                        },
+                        bodyFont: {
+                            family: 'Inter',
+                            size: 13,
+                        },
+                        titleColor: '#1F2937',
+                        bodyColor: '#4B5563',
+                        displayColors: true,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.raw.toLocaleString()}`;
+                            }
+                        }
+                    },
+                },
+            },
+        });
+
+        // Круговая диаграмма вовлеченности
+        const engagementChart = new Chart(document.getElementById('engagementChart'), {
+            type: 'pie',
+            data: {
+                labels: ['Доставлено', 'Открыто', 'Кликнуто', 'Отписались'],
+                datasets: [{
+                    data: [85, 65, 12, 3],
+                    backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'],
+                }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        backgroundColor: 'white',
+                        borderColor: '#e5e7eb',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                        padding: 12,
+                        titleFont: {
+                            family: 'Inter',
+                            size: 14,
+                            weight: '600',
+                        },
+                        bodyFont: {
+                            family: 'Inter',
+                            size: 13,
+                        },
+                        titleColor: '#1F2937',
+                        bodyColor: '#4B5563',
+                        displayColors: true,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.label}: ${context.raw}%`;
+                            }
+                        }
+                    },
+                },
+            },
+        });
+    </script>
+</body>
+</html>

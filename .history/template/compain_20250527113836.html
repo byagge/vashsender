@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Campaign</title>
+    <!-- Include Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Include Alpine.js via CDN -->
+    <script src="https://unpkg.com/alpinejs" defer></script>
+    <!-- Include Lucide icons via CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <!-- Main Container with Alpine.js Data Scope -->
+    <div class="min-h-screen bg-gray-50 flex" x-data="campaignForm">
+        <!-- Sidebar -->
+        <div class="w-64 bg-white border-r border-gray-200 flex flex-col">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-900">Email</h2>
+            </div>
+            <nav class="flex-1 p-4 space-y-2">
+                <div class="flex items-center space-x-3 px-3 py-2 rounded-lg cursor-pointer transition-colors text-gray-700 hover:bg-gray-100">
+                    <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                    <span class="font-medium">Dashboard</span>
+                </div>
+                <div class="flex items-center space-x-3 px-3 py-2 rounded-lg cursor-pointer transition-colors bg-blue-50 text-blue-700 border border-blue-200">
+                    <i data-lucide="mail" class="w-5 h-5"></i>
+                    <span class="font-medium">Campaigns</span>
+                </div>
+                <div class="flex items-center space-x-3 px-3 py-2 rounded-lg cursor-pointer transition-colors text-gray-700 hover:bg-gray-100">
+                    <i data-lucide="file-text" class="w-5 h-5"></i>
+                    <span class="font-medium">Templates</span>
+                </div>
+                <div class="flex items-center space-x-3 px-3 py-2 rounded-lg cursor-pointer transition-colors text-gray-700 hover:bg-gray-100">
+                    <i data-lucide="users" class="w-5 h-5"></i>
+                    <span class="font-medium">Contact Lists</span>
+                </div>
+                <div class="flex items-center space-x-3 px-3 py-2 rounded-lg cursor-pointer transition-colors text-gray-700 hover:bg-gray-100">
+                    <i data-lucide="at-sign" class="w-5 h-5"></i>
+                    <span class="font-medium">Sender Emails</span>
+                </div>
+                <div class="flex items-center space-x-3 px-3 py-2 rounded-lg cursor-pointer transition-colors text-gray-700 hover:bg-gray-100">
+                    <i data-lucide="server" class="w-5 h-5"></i>
+                    <span class="font-medium">Domains</span>
+                </div>
+                <div class="flex items-center space-x-3 px-3 py-2 rounded-lg cursor-pointer transition-colors text-gray-700 hover:bg-gray-100">
+                    <i data-lucide="settings" class="w-5 h-5"></i>
+                    <span class="font-medium">Settings</span>
+                </div>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex">
+            <!-- Form Section -->
+            <div class="flex-1 p-8">
+                <div class="max-w-2xl">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between mb-8">
+                        <div>
+                            <h1 class="text-3xl font-bold text-gray-900">Новая рассылка</h1>
+                            <p class="text-gray-600 mt-2">Создайте и отправьте свою email-кампанию</p>
+                        </div>
+                        <template x-if="saveStatus">
+                            <div class="flex items-center space-x-2 text-green-600">
+                                <i data-lucide="check" class="w-4 h-4"></i>
+                                <span class="text-sm font-medium" x-text="saveStatus"></span>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Form Fields -->
+                    <div class="space-y-6">
+                        <!-- Campaign Name -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Название рассылки <span class="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                :class="errors.campaignName ? 'border-red-300' : 'border-gray-300'"
+                                placeholder="Enter campaign name"
+                                x-model="formData.campaignName"
+                                @input.debounce.1000ms="handleSave()"
+                            />
+                            <template x-if="errors.campaignName">
+                                <p class="text-red-500 text-sm mt-1" x-text="errors.campaignName"></p>
+                            </template>
+                        </div>
+
+                        <!-- Template Selection -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Выберите шаблон электронной почты
+                            </label>
+                            <div class="relative">
+                                <button
+                                    type="button"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-left flex items-center justify-between hover:border-gray-400 transition-colors"
+                                    @click="showTemplateDropdown = !showTemplateDropdown"
+                                >
+                                    <span :class="formData.templateId ? 'text-gray-900' : 'text-gray-500'">
+                                        <template x-if="formData.templateId">
+                                            <span x-text="templates.find(t => t.id === formData.templateId).name"></span>
+                                        </template>
+                                        <template x-if="!formData.templateId">
+                                            <span>Choose a template</span>
+                                        </template>
+                                    </span>
+                                    <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400"></i>
+                                </button>
+                                <div
+                                    x-show="showTemplateDropdown"
+                                    @click.away="showTemplateDropdown = false"
+                                    class="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10"
+                                >
+                                    <template x-for="template in templates" :key="template.id">
+                                        <div
+                                            class="p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                            @click="formData.templateId = template.id; showTemplateDropdown = false"
+                                        >
+                                            <div class="font-medium text-gray-900" x-text="template.name"></div>
+                                            <div class="text-sm text-gray-600 mt-1" x-text="template.preview"></div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Lists -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Select Contact Lists <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <button
+                                    type="button"
+                                    class="w-full px-4 py-3 border rounded-lg bg-white text-left flex items-center justify-between hover:border-gray-400 transition-colors"
+                                    :class="errors.contactLists ? 'border-red-300' : 'border-gray-300'"
+                                    @click="showContactListDropdown = !showContactListDropdown"
+                                >
+                                    <span :class="formData.contactLists.length > 0 ? 'text-gray-900' : 'text-gray-500'">
+                                        <template x-if="formData.contactLists.length > 0">
+                                            <span x-text="`${formData.contactLists.length} list${formData.contactLists.length > 1 ? 's' : ''} selected`"></span>
+                                        </template>
+                                        <template x-if="formData.contactLists.length === 0">
+                                            <span>Choose contact lists</span>
+                                        </template>
+                                    </span>
+                                    <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400"></i>
+                                </button>
+                                <div
+                                    x-show="showContactListDropdown"
+                                    @click.away="showContactListDropdown = false"
+                                    class="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10"
+                                >
+                                    <template x-for="list in contactLists" :key="list.id">
+                                        <div class="p-3 hover:bg-gray-50 cursor-pointer flex items-center space-x-3">
+                                            <input
+                                                type="checkbox"
+                                                class="w-4 h-4"
+                                                x-model="formData.contactLists"
+                                                :value="list.id"
+                                            />
+                                            <div class="flex-1">
+                                                <div class="font-medium text-gray-900" x-text="list.name"></div>
+                                                <div class="text-sm text-gray-500" x-text="`${list.count} contacts`"></div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                            <template x-if="errors.contactLists">
+                                <p class="text-red-500 text-sm mt-1" x-text="errors.contactLists"></p>
+                            </template>
+                        </div>
+
+                        <!-- Sender Email -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Sender Email <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <button
+                                    type="button"
+                                    class="w-full px-4 py-3 border rounded-lg bg-white text-left flex items-center justify-between hover:border-gray-400 transition-colors"
+                                    :class="errors.senderEmail ? 'border-red-300' : 'border-gray-300'"
+                                    @click="showSenderDropdown = !showSenderDropdown"
+                                >
+                                    <span :class="formData.senderEmail ? 'text-gray-900' : 'text-gray-500'">
+                                        <template x-if="formData.senderEmail">
+                                            <span x-text="formData.senderEmail"></span>
+                                        </template>
+                                        <template x-if="!formData.senderEmail">
+                                            <span>Choose sender email</span>
+                                        </template>
+                                    </span>
+                                    <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400"></i>
+                                </button>
+                                <div
+                                    x-show="showSenderDropdown"
+                                    @click.away="showSenderDropdown = false"
+                                    class="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10"
+                                >
+                                    <template x-for="email in senderEmails.filter(e => e.verified)" :key="email.id">
+                                        <div
+                                            class="p-3 hover:bg-gray-50 cursor-pointer flex items-center justify-between"
+                                            @click="formData.senderEmail = email.email; showSenderDropdown = false"
+                                        >
+                                            <span class="text-gray-900" x-text="email.email"></span>
+                                            <span class="text-green-600 text-sm font-medium">Verified</span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                            <template x-if="errors.senderEmail">
+                                <p class="text-red-500 text-sm mt-1" x-text="errors.senderEmail"></p>
+                            </template>
+                        </div>
+
+                        <!-- Email Subject -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Email Subject <span class="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                :class="errors.subject ? 'border-red-300' : 'border-gray-300'"
+                                placeholder="Enter email subject"
+                                x-model="formData.subject"
+                                @input.debounce.1000ms="handleSave()"
+                            />
+                            <template x-if="errors.subject">
+                                <p class="text-red-500 text-sm mt-1" x-text="errors.subject"></p>
+                            </template>
+                        </div>
+
+                        <!-- Sender Name -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Sender Name
+                            </label>
+                            <input
+                                type="text"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                placeholder="Enter sender name"
+                                x-model="formData.senderName"
+                            />
+                        </div>
+
+                        <!-- Reply-to Email -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Reply-to Email
+                            </label>
+                            <input
+                                type="email"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                placeholder="Enter reply-to email"
+                                x-model="formData.replyTo"
+                            />
+                        </div>
+
+                        <!-- Scheduled Send -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Scheduled Send (Optional)
+                            </label>
+                            <div class="grid grid-cols-2 gap-4">
+                                <input
+                                    type="date"
+                                    class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                    x-model="formData.scheduledDate"
+                                />
+                                <input
+                                    type="time"
+                                    class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                    x-model="formData.scheduledTime"
+                                />
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex space-x-4 pt-6">
+                            <button
+                                @click="if (validateForm()) { alert('Campaign sent successfully!') }"
+                                class="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                            >
+                                <i data-lucide="send" class="w-4 h-4"></i>
+                                <span>Send Now</span>
+                            </button>
+                            <button
+                                @click="alert('Campaign saved as draft!')"
+                                class="flex items-center space-x-2 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                            >
+                                <i data-lucide="save" class="w-4 h-4"></i>
+                                <span>Save as Draft</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Section -->
+            <div class="w-96 bg-white border-l border-gray-200 p-6">
+                <div class="flex items-center space-x-2 mb-6">
+                    <i data-lucide="eye" class="w-5 h-5 text-gray-600"></i>
+                    <h3 class="text-lg font-semibold text-gray-900">Live Preview</h3>
+                </div>
+
+                <template x-if="formData.templateId">
+                    <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                        <div class="text-center mb-4">
+                            <h4 class="font-semibold text-gray-900" x-text="templates.find(t => t.id === formData.templateId).name"></h4>
+                            <p class="text-sm text-gray-600 mt-2" x-text="templates.find(t => t.id === formData.templateId).preview"></p>
+                        </div>
+                        <!-- Mock Email Preview -->
+                        <div class="bg-white border rounded p-4 text-sm">
+                            <div class="border-b pb-3 mb-3">
+                                <div class="font-medium">Subject: <span x-text="formData.subject || 'Your email subject'"></span></div>
+                                <div class="text-gray-600">From: <span x-text="formData.senderName || 'Sender Name'"></span> &lt;<span x-text="formData.senderEmail || 'sender@email.com'"></span>&gt;</div>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                                <div class="h-4 bg-gray-200 rounded w-full"></div>
+                                <div class="h-4 bg-gray-200 rounded w-5/6"></div>
+                                <div class="h-8 bg-blue-100 rounded flex items-center justify-center mt-4">
+                                    <span class="text-blue-800 font-medium">Call to Action</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                <template x-if="!formData.templateId">
+                    <div class="text-center text-gray-500 py-12">
+                        <i data-lucide="file-text" class="w-12 h-12 mx-auto text-gray-300 mb-4"></i>
+                        <p>Select a template to see the preview</p>
+                    </div>
+                </template>
+
+                <!-- Campaign Summary -->
+                <template x-if="formData.campaignName || formData.contactLists.length > 0 || formData.scheduledDate">
+                    <div class="mt-8 p-4 bg-blue-50 rounded-lg">
+                        <h4 class="font-medium text-blue-900 mb-3">Campaign Summary</h4>
+                        <div class="space-y-2 text-sm">
+                            <template x-if="formData.campaignName">
+                                <div class="flex justify-between">
+                                    <span class="text-blue-700">Name:</span>
+                                    <span class="text-blue-900 font-medium" x-text="formData.campaignName"></span>
+                                </div>
+                            </template>
+                            <template x-if="formData.contactLists.length > 0">
+                                <div class="flex justify-between">
+                                    <span class="text-blue-700">Recipients:</span>
+                                    <span class="text-blue-900 font-medium" x-text="contactLists.filter(list => formData.contactLists.includes(list.id)).reduce((sum, list) => sum + list.count, 0) + ' contacts'"></span>
+                                </div>
+                            </template>
+                            <template x-if="formData.scheduledDate">
+                                <div class="flex justify-between">
+                                    <span class="text-blue-700">Scheduled:</span>
+                                    <span class="text-blue-900 font-medium" x-text="formData.scheduledDate + ' ' + (formData.scheduledTime || '')"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alpine.js Data and Logic -->
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('campaignForm', () => ({
+                // Form Data
+                formData: {
+                    campaignName: '',
+                    templateId: '',
+                    contactLists: [],
+                    senderEmail: '',
+                    subject: '',
+                    senderName: '',
+                    replyTo: '',
+                    scheduledDate: '',
+                    scheduledTime: ''
+                },
+                // Dropdown Visibility
+                showTemplateDropdown: false,
+                showContactListDropdown: false,
+                showSenderDropdown: false,
+                // Save Status and Errors
+                saveStatus: '',
+                errors: {},
+                // Mock Data
+                templates: [
+                    { id: '1', name: 'Newsletter Template', preview: 'Clean newsletter layout with header, content sections, and footer' },
+                    { id: '2', name: 'Product Launch', preview: 'Bold design perfect for announcing new products with CTA buttons' },
+                    { id: '3', name: 'Welcome Series', preview: 'Friendly welcome email with company introduction and next steps' },
+                    { id: '4', name: 'Promotional Offer', preview: 'Eye-catching design for discounts and special offers' }
+                ],
+                contactLists: [
+                    { id: '1', name: 'Newsletter Subscribers', count: 1250 },
+                    { id: '2', name: 'Premium Customers', count: 340 },
+                    { id: '3', name: 'New Leads', count: 890 },
+                    { id: '4', name: 'VIP Members', count: 125 }
+                ],
+                senderEmails: [
+                    { id: '1', email: 'hello@company.com', verified: true },
+                    { id: '2', email: 'marketing@company.com', verified: true },
+                    { id: '3', email: 'support@company.com', verified: true },
+                    { id: '4', email: 'news@company.com', verified: false }
+                ],
+                // Auto-Save Handler
+                handleSave() {
+                    if (this.formData.campaignName || this.formData.subject) {
+                        this.saveStatus = 'Saving...';
+                        setTimeout(() => {
+                            this.saveStatus = 'Saved';
+                            setTimeout(() => this.saveStatus = '', 2000);
+                        }, 1000);
+                    }
+                },
+                // Form Validation
+                validateForm() {
+                    const errors = {};
+                    if (!this.formData.campaignName) errors.campaignName = 'Campaign name is required';
+                    if (!this.formData.subject) errors.subject = 'Email subject is required';
+                    if (!this.formData.senderEmail) errors.senderEmail = 'Sender email is required';
+                    if (this.formData.contactLists.length === 0) errors.contactLists = 'At least one contact list is required';
+                    this.errors = errors;
+                    return Object.keys(errors).length === 0;
+                }
+            }));
+        });
+    </script>
+
+    <!-- Initialize Lucide Icons -->
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

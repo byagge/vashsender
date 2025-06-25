@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модерация рассылок</title>
+    <!-- Подключаем Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Подключаем Alpine.js -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <!-- Подключаем Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Добавляем шрифт Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        }
+        .hover-gradient:hover {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Данные кампаний -->
+    <script>
+        const campaigns = [
+            {
+                id: 1,
+                name: 'Летняя распродажа 2025',
+                senderEmail: 'sales@fashionstore.com',
+                userName: 'Анна Петрова',
+                userEmail: 'anna@fashionstore.com',
+                createdAt: '2025-06-09T10:30:00',
+                subject: '🌞 Скидки до 70% на летнюю коллекцию!',
+                lists: ['VIP клиенты', 'Подписчики новостей'],
+                recipients: 15420,
+                status: 'pending',
+                autoSendIn: 7200,
+                preview: {
+                    html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <header style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center;">
+                            <h1>🌞 Летняя распродажа</h1>
+                            <p>Скидки до 70% на всю летнюю коллекцию</p>
+                        </header>
+                        <main style="padding: 20px;">
+                            <p>Привет! Лето в разгаре, и мы приготовили для тебя невероятные скидки!</p>
+                            <div style="background: #f8f9ff; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                                <h3>Топ предложения:</h3>
+                                <ul>
+                                    <li>Платья и сарафаны - 50% скидка</li>
+                                    <li>Купальники - 40% скидка</li>
+                                    <li>Обувь - 30% скидка</li>
+                                </ul>
+                            </div>
+                            <a href="#" style="background: #667eea; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block; margin: 10px 0;">Перейти в каталог</a>
+                        </main>
+                    </div>`
+                }
+            },
+            {
+                id: 2,
+                name: 'Новинки недели',
+                senderEmail: 'info@techgadgets.ru',
+                userName: 'Михаил Сидоров',
+                userEmail: 'mikhail@techgadgets.ru',
+                createdAt: '2025-06-09T09:15:00',
+                subject: '📱 10 крутых гаджетов этой недели',
+                lists: ['Подписчики блога'],
+                recipients: 8350,
+                status: 'pending',
+                autoSendIn: 5400,
+                preview: {
+                    html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <header style="background: #1a1a2e; color: white; padding: 20px;">
+                            <h1>📱 Tech Gadgets Weekly</h1>
+                        </header>
+                        <main style="padding: 20px;">
+                            <h2>10 крутых гаджетов этой недели</h2>
+                            <p>Мы отобрали самые интересные новинки в мире технологий!</p>
+                            <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin: 15px 0;">
+                                <h4>1. Умные часы WatchPro 5</h4>
+                                <p>Революционный датчик здоровья и 7 дней автономности</p>
+                            </div>
+                        </main>
+                    </div>`
+                }
+            },
+            {
+                id: 3,
+                name: 'Приглашение на вебинар',
+                senderEmail: 'events@eduplatform.com',
+                userName: 'Елена Волкова',
+                userEmail: 'elena@eduplatform.com',
+                createdAt: '2025-06-09T08:45:00',
+                subject: '🎓 Бесплатный вебинар: "Маркетинг в 2025"',
+                lists: ['Маркетологи', 'Предприниматели'],
+                recipients: 3200,
+                status: 'pending',
+                autoSendIn: 10800,
+                preview: {
+                    html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <header style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; padding: 30px; text-align: center;">
+                            <h1>🎓 EduPlatform</h1>
+                            <h2>Бесплатный вебинар</h2>
+                        </header>
+                        <main style="padding: 25px;">
+                            <h3>"Маркетинг в 2025: тренды и стратегии"</h3>
+                            <p><strong>Дата:</strong> 15 июня 2025, 19:00 МСК</p>
+                            <p><strong>Спикер:</strong> Алексей Смирнов, CMO крупной IT-компании</p>
+                            <div style="background: #fef3c7; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                                <p><strong>Что узнаете:</strong></p>
+                                <ul>
+                                    <li>Новые каналы привлечения клиентов</li>
+                                    <li>AI в маркетинге</li>
+                                    <li>Персонализация на новом уровне</li>
+                                </ul>
+                            </div>
+                        </main>
+                    </div>`
+                }
+            }
+        ];
+    </script>
+
+    <!-- Главный контейнер -->
+    <div x-data="{
+        searchTerm: '',
+        statusFilter: 'pending',
+        userFilter: '',
+        selectedCampaign: null,
+        rejectModal: { isOpen: false, campaignId: null },
+        rejectionReason: '',
+        campaigns: campaigns,
+        timers: {},
+        init() {
+            this.campaigns.forEach(campaign => {
+                if (campaign.status === 'pending') {
+                    this.timers[campaign.id] = campaign.autoSendIn;
+                }
+            });
+            setInterval(() => {
+                Object.keys(this.timers).forEach(id => {
+                    if (this.timers[id] > 0) {
+                        this.timers[id]--;
+                    }
+                });
+            }, 1000);
+        },
+        get filteredCampaigns() {
+            return this.campaigns.filter(campaign => {
+                const matchesSearch = campaign.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+                                      campaign.subject.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+                                      campaign.userName.toLowerCase().includes(this.searchTerm.toLowerCase());
+                const matchesStatus = this.statusFilter === 'all' || campaign.status === this.statusFilter;
+                const matchesUser = !this.userFilter || campaign.userName.toLowerCase().includes(this.userFilter.toLowerCase());
+                return matchesSearch && matchesStatus && matchesUser;
+            });
+        },
+        formatTime(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        },
+        formatDate(date) {
+            return new Date(date).toLocaleDateString('ru-RU');
+        },
+        formatTimeOnly(date) {
+            return new Date(date).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        },
+        getStatusColor(status) {
+            return status === 'approved' ? 'bg-green-100 text-green-800' :
+                   status === 'rejected' ? 'bg-red-100 text-red-800' :
+                   'bg-yellow-100 text-yellow-800';
+        },
+        handleApprove(id) {
+            this.campaigns = this.campaigns.map(c => c.id === id ? { ...c, status: 'approved' } : c);
+        },
+        openRejectModal(id) {
+            this.rejectModal = { isOpen: true, campaignId: id };
+        },
+        closeRejectModal() {
+            this.rejectModal = { isOpen: false, campaignId: null };
+            this.rejectionReason = '';
+        },
+        handleReject(id, reason) {
+            this.campaigns = this.campaigns.map(c => c.id === id ? { ...c, status: 'rejected', rejectionReason: reason } : c);
+            this.closeRejectModal();
+        },
+        handleTrust(id) {
+            this.campaigns = this.campaigns.map(c => c.id === id ? { ...c, userTrusted: true } : c);
+        }
+    }" class="flex h-screen bg-gray-50">
+
+        <!-- Боковая панель -->
+        <div class="w-64 bg-white shadow-lg border-r border-gray-100">
+            <div class="p-6 border-b border-gray-100">
+                <h1 class="text-xl font-bold gradient-text">
+                    EmailService Pro
+                </h1>
+            </div>
+            <nav class="mt-6">
+                <a href="#" class="flex items-center px-6 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200">
+                    <i data-lucide="bar-chart-2" class="w-5 h-5 mr-3 text-indigo-500"></i> Dashboard
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200">
+                    <i data-lucide="mail" class="w-5 h-5 mr-3 text-blue-500"></i> Рассылки
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200">
+                    <i data-lucide="file-text" class="w-5 h-5 mr-3 text-green-500"></i> Шаблоны
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200">
+                    <i data-lucide="users" class="w-5 h-5 mr-3 text-purple-500"></i> Контакты
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200">
+                    <i data-lucide="globe" class="w-5 h-5 mr-3 text-orange-500"></i> Отправители и домены
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-sm font-medium bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 border-r-2 border-indigo-500 transition-all duration-200">
+                    <i data-lucide="shield" class="w-5 h-5 mr-3 text-indigo-500"></i> Модерация
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200">
+                    <i data-lucide="user" class="w-5 h-5 mr-3 text-pink-500"></i> Пользователи
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200">
+                    <i data-lucide="settings" class="w-5 h-5 mr-3 text-gray-500"></i> Настройки
+                </a>
+            </nav>
+        </div>
+
+        <!-- Основное содержимое -->
+        <div class="flex-1 overflow-hidden">
+            <div class="h-full flex flex-col">
+                <!-- Заголовок -->
+                <div class="bg-white shadow-sm border-b border-gray-100 p-6">
+                    <div class="flex items-center justify-between">
+                        <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                            <i data-lucide="shield" class="w-8 h-8 mr-3 text-indigo-500"></i> Модерация рассылок
+                        </h1>
+                        <div class="text-sm text-gray-500 flex items-center">
+                            <i data-lucide="clock" class="w-4 h-4 mr-2 text-indigo-500"></i>
+                            <span x-text="filteredCampaigns.filter(c => c.status === 'pending').length + ' ожидают проверки'"></span>
+                        </div>
+                    </div>
+
+                    <!-- Фильтры -->
+                    <div class="mt-6 flex flex-wrap gap-4">
+                        <div class="flex-1 min-w-64">
+                            <div class="relative">
+                                <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                                <input type="text" placeholder="Поиск по названию, теме или пользователю..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" x-model="searchTerm">
+                            </div>
+                        </div>
+                        <select class="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" x-model="statusFilter">
+                            <option value="all">Все статусы</option>
+                            <option value="pending">Ожидают</option>
+                            <option value="approved">Одобрены</option>
+                            <option value="rejected">Отклонены</option>
+                        </select>
+                        <div class="relative">
+                            <i data-lucide="user" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                            <input type="text" placeholder="Пользователь" class="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" x-model="userFilter">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Список кампаний -->
+                <div class="flex-1 overflow-auto p-6">
+                    <div class="space-y-6">
+                        <template x-for="campaign in filteredCampaigns" :key="campaign.id">
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200">
+                                <div class="p-6">
+                                    <div class="flex items-start justify-between mb-4">
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-3 mb-2">
+                                                <h3 class="text-xl font-semibold text-gray-900" x-text="campaign.name"></h3>
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" :class="getStatusColor(campaign.status)">
+                                                    <i data-lucide="check-circle-2" class="w-4 h-4 mr-1" x-show="campaign.status === 'approved'"></i>
+                                                    <i data-lucide="x-circle" class="w-4 h-4 mr-1" x-show="campaign.status === 'rejected'"></i>
+                                                    <i data-lucide="alert-circle" class="w-4 h-4 mr-1" x-show="campaign.status === 'pending'"></i>
+                                                    <span x-text="campaign.status === 'pending' ? 'Ожидает' : campaign.status === 'approved' ? 'Одобрено' : 'Отклонено'"></span>
+                                                </span>
+                                                <span x-if="campaign.userTrusted" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                    <i data-lucide="star" class="w-3 h-3 mr-1"></i> Доверенный
+                                                </span>
+                                            </div>
+                                            <p class="text-gray-600 mb-3" x-text="campaign.subject"></p>
+                                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                                <div class="flex items-center text-gray-600">
+                                                    <i data-lucide="mail" class="w-4 h-4 mr-2 text-indigo-500"></i>
+                                                    <div class="font-medium" x-text="campaign.senderEmail"></div>
+                                                </div>
+                                                <div class="flex items-center text-gray-600">
+                                                    <i data-lucide="user" class="w-4 h-4 mr-2 text-blue-500"></i>
+                                                    <div>
+                                                        <div class="font-medium" x-text="campaign.userName"></div>
+                                                        <div class="text-xs text-gray-500" x-text="campaign.userEmail"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="flex items-center text-gray-600">
+                                                    <i data-lucide="calendar" class="w-4 h-4 mr-2 text-green-500"></i>
+                                                    <div>
+                                                        <div class="font-medium" x-text="formatDate(campaign.createdAt)"></div>
+                                                        <div class="text-xs text-gray-500" x-text="formatTimeOnly(campaign.createdAt)"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="flex items-center text-gray-600">
+                                                    <i data-lucide="list" class="w-4 h-4 mr-2 text-orange-500"></i>
+                                                    <div>
+                                                        <div class="font-medium" x-text="campaign.recipients.toLocaleString() + ' получателей'"></div>
+                                                        <div class="text-xs text-gray-500" x-text="campaign.lists.join(', ')"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Таймер автоотправки -->
+                                    <div x-if="campaign.status === 'pending'" class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                        <div class="flex items-center text-amber-800">
+                                            <i data-lucide="clock" class="w-4 h-4 mr-2"></i>
+                                            <span class="text-sm font-medium" x-text="'Автоотправка через: ' + formatTime(timers[campaign.id] || campaign.autoSendIn)"></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Превью -->
+                                    <div class="mb-4">
+                                        <button @click="selectedCampaign = selectedCampaign === campaign.id ? null : campaign.id" class="flex items-center text-indigo-600 hover:text-indigo-700 text-sm font-medium">
+                                            <i data-lucide="eye" class="w-4 h-4 mr-1"></i>
+                                            <span x-text="selectedCampaign === campaign.id ? 'Скрыть превью' : 'Показать превью'"></span>
+                                        </button>
+                                        <div x-show="selectedCampaign === campaign.id" class="mt-3 border border-gray-200 rounded-lg overflow-hidden">
+                                            <div class="bg-gray-50 px-3 py-2 text-xs text-gray-600 border-b flex items-center">
+                                                <i data-lucide="file-text" class="w-4 h-4 mr-2"></i>
+                                                Превью письма
+                                            </div>
+                                            <div class="p-4 max-h-96 overflow-auto" x-html="campaign.preview.html"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Действия -->
+                                    <div x-if="campaign.status === 'pending'" class="flex items-center gap-3 pt-4 border-t border-gray-100">
+                                        <button @click="handleApprove(campaign.id)" class="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                                            <i data-lucide="check" class="w-4 h-4 mr-2"></i> Одобрить и отправить
+                                        </button>
+                                        <button @click="openRejectModal(campaign.id)" class="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                                            <i data-lucide="x" class="w-4 h-4 mr-2"></i> Отклонить
+                                        </button>
+                                        <button x-if="!campaign.userTrusted" @click="handleTrust(campaign.id)" class="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                            <i data-lucide="star" class="w-4 h-4 mr-2"></i> Пометить как доверенного
+                                        </button>
+                                    </div>
+
+                                    <!-- Причина отклонения -->
+                                    <div x-if="campaign.status === 'rejected' && campaign.rejectionReason" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                        <div class="text-red-800 text-sm flex items-start">
+                                            <i data-lucide="alert-circle" class="w-4 h-4 mr-2 mt-0.5"></i>
+                                            <div>
+                                                <strong>Причина отклонения:</strong> <span x-text="campaign.rejectionReason"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Сообщение, если кампаний нет -->
+                        <div x-if="filteredCampaigns.length === 0" class="text-center py-12">
+                            <i data-lucide="search" class="w-12 h-12 text-gray-400 mx-auto mb-4"></i>
+                            <p class="text-gray-500 text-lg mb-2">Рассылки не найдены</p>
+                            <p class="text-gray-400">Попробуйте изменить параметры поиска</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно отклонения -->
+        <div x-show="rejectModal.isOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i data-lucide="x-circle" class="w-5 h-5 mr-2 text-red-500"></i> Отклонить рассылку
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <p class="text-gray-600 mb-4">
+                        Укажите причину отклонения рассылки. Это поможет пользователю понять, что нужно исправить.
+                    </p>
+                    <textarea x-model="rejectionReason" placeholder="Например: Содержимое не соответствует правилам сервиса..." class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none" rows="4"></textarea>
+                </div>
+                <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+                    <button @click="closeRejectModal" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium">
+                        Отмена
+                    </button>
+                    <button @click="handleReject(rejectModal.campaignId, rejectionReason)" :disabled="!rejectionReason.trim()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors">
+                        Отклонить рассылку
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Инициализация иконок Lucide -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
